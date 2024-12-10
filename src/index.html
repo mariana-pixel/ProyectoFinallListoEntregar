@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Energy RogerCORP</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+  
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+  
+  <script>
+
+    function mostrarGrafico() {
+      $.ajax({
+        url: '/graficar/' + $("#sl_paises").val() + "/" + $("#sl_grafico").val(),
+        type: 'GET',
+        success: function(r) {
+          $("#info").html(r);
+        }
+      });
+    }
+
+    function cargarData() {
+      $.ajax({
+        url: '/cargarfuentedatos',
+        type: 'GET',
+        success: function(r) {
+          $("#info").html(r);
+          $('#t_datos').DataTable();
+        }
+      });
+    }
+
+
+
+    function calculadora() {
+      // Crear un formulario de entrada para la calculadora
+      const calculatorForm = `
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <label for="kwMes" class="form-label">Consumo de energía (kWh/mes):</label>
+            <select id="kwMes" class="form-select">
+              ${Array.from({length: 5000}, (_, i) => (i + 1) ).map(value => `<option value="${value}">${value} kWh</option>`).join('')}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="horasLuz" class="form-label">Horas de Flujo de Agua promedio (diarias):</label>
+            <select id="horasLuz" class="form-select">
+              ${Array.from({length: 24}, (_, i) => i + 1).map(value => `<option value="${value}">${value} horas</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <div class="col-md-12 text-center">
+            <button onclick="calcularPaneles()" class="btn btn-primary">Calcular</button>
+          </div>
+        </div>
+        <div id="resultado" class="mt-4"></div>
+      `;
+      $("#info2").html(calculatorForm);
+    }
+
+    function calcularPaneles() {
+      const kwMes = parseFloat($("#kwMes").val());
+      const horasLuz = parseFloat($("#horasLuz").val());
+
+      if (!kwMes || !horasLuz || kwMes <= 0 || horasLuz <= 0) {
+        $("#resultado").html("<div class='alert alert-danger'>Por favor, seleccione valores válidos.</div>");
+        return;
+      }
+
+      // Suposiciones:
+      const eficienciaPanel = 0.34; // Eficiencia promedio del 18%
+      const potenciaPanel = 0.63; // Cada panel genera 0.3 kW en condiciones óptimas
+
+      // Cálculos:
+      const energiaDiaria = kwMes / 30; // Consumo diario en kWh
+      const energiaHidroDiaria = horasLuz * potenciaPanel * eficienciaPanel; // Energía producida por un panel al día
+      const TurbinasNecesarias = Math.ceil(energiaDiaria / energiaHidroDiaria); // Número de paneles necesarios
+
+      // Resultado:
+      const resultadoHTML = `
+        <div class='alert alert-success'>
+          <h4>Resultados:</h4>
+          <p><strong>Consumo mensual:</strong> ${kwMes.toFixed(2)} kWh</p>
+          <p><strong>Horas de flujo de Agua :</strong> ${horasLuz.toFixed(2)} horas/día</p>
+          <p><strong>Turbinas necesarias:</strong> ${TurbinasNecesarias} Turbina(s)</p>
+          <p><strong>Eficiencia de las Turbinas:</strong> ${(eficienciaPanel * 100).toFixed(2)}%</p>
+        </div>
+      `;
+      $("#resultado").html(resultadoHTML);
+    }
+
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    footer {
+      background-color: #004d40;
+      color: white;
+      padding: 25px;
+    }
+    .jumbotron {
+      background: url('') no-repeat center center;
+      background-size: cover;
+      color: white;
+    }
+    .jumbotron h1, .jumbotron p {
+      color: #ffffff;
+      text-shadow: 2px 2px 4px #000;
+    }
+    .section-title {
+      color: #00695c;
+      text-transform: uppercase;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    .bg-green {
+      background-color: #e8f5e9;
+      padding: 20px 0;
+    }
+    .service-icon {
+      font-size: 50px;
+      color: #00695c;
+      margin-bottom: 15px;
+    }
+    .btn-custom {
+      background-color: #00695c;
+      color: white;
+      border: none;
+    }
+    .btn-custom:hover {
+      background-color: #004d40;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="jumbotron text-center">
+    <h1>Bienvenidos a HidroEnergy</h1>      
+    <p>Liderando el desarrollo sostenible con energía hidroeléctrica</p>
+  </div>
+  
+  
+  <!-- ¿Qué es la energía hidroeléctrica? -->
+  <div class="container-fluid text-center">
+    <h2 class="section-title">¿Qué es la Energía Hidroeléctrica?</h2>
+    <p>
+      La energía hidroeléctrica es una fuente de energía renovable que utiliza la fuerza del agua en movimiento, como ríos o corrientes, 
+      para generar electricidad. Es una de las formas más limpias y sostenibles de producir energía.
+    </p>
+  </div>
+  
+  <!-- Ventajas -->
+  <div id="ventajas" class="container-fluid bg-green text-center">
+    <h2 class="section-title">Ventajas de la Energía Hidroeléctrica</h2>
+    <div class="row">
+      <div class="col-sm-4">
+        <i class="fas fa-leaf service-icon"></i>
+        <h4>Energía Limpia</h4>
+        <p>No produce emisiones contaminantes, ayudando a combatir el cambio climático.</p>
+      </div>
+      <div class="col-sm-4">
+        <i class="fas fa-water service-icon"></i>
+        <h4>Renovable</h4>
+        <p>Utiliza un recurso natural y renovable: el agua en movimiento.</p>
+      </div>
+      <div class="col-sm-4">
+        <i class="fas fa-bolt service-icon"></i>
+        <h4>Eficiencia Energética</h4>
+        <p>Es una de las formas más eficientes de producir electricidad a gran escala.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Desventajas -->
+  <div id="desventajas" class="container-fluid text-center">
+    <h2 class="section-title">Desventajas de la Energía Hidroeléctrica</h2>
+    <div class="row">
+      <div class="col-sm-6">
+        <i class="fas fa-tree service-icon"></i>
+        <h4>Impacto Ambiental</h4>
+        <p>Puede alterar ecosistemas y afectar la vida silvestre en las áreas circundantes.</p>
+      </div>
+      <div class="col-sm-6">
+        <i class="fas fa-users service-icon"></i>
+        <h4>Desplazamiento de Comunidades</h4>
+        <p>La construcción de grandes represas puede desplazar comunidades locales.</p>
+      </div>
+    </div>
+  </div>
+  <br>
+  <!-- Historia -->
+  <div class="container-fluid text-center">
+    <h2 class="section-title">Historia de la Energía Hidroeléctrica</h2>
+    <p>
+      La historia de la energía hidroeléctrica en Colombia se remonta a finales del siglo XIX, cuando se iniciaron los primeros servicios de electricidad en Bogotá. Este desarrollo fue impulsado por inversores privados que establecieron empresas para generar, distribuir y vender electricidad, comenzando con el alumbrado público en 1886
+  </div>
+  
+  <!-- Otros usos -->
+  <div id="usos" class="container-fluid bg-green text-center">
+    <h2 class="section-title">¿Dónde se Utiliza la Energía Hidroeléctrica?</h2>
+    <p>
+      La energía hidroeléctrica se utiliza en hogares, industrias y proyectos comunitarios para satisfacer las necesidades energéticas de forma limpia y sostenible.
+    </p>
+    <div class="row">
+      <div class="col-sm-4">
+        <i class="fas fa-home service-icon"></i>
+        <h4>Hogares</h4>
+        <p>Proporciona electricidad confiable para iluminación, refrigeración y entretenimiento.</p>
+      </div>
+      <div class="col-sm-4">
+        <i class="fas fa-industry service-icon"></i>
+        <h4>Industrias</h4>
+        <p>Es clave para procesos industriales que requieren grandes cantidades de energía.</p>
+      </div>
+      <div class="col-sm-4">
+        <i class="fas fa-globe service-icon"></i>
+        <h4>Proyectos Comunitarios</h4>
+        <p>Impulsa iniciativas de desarrollo sostenible en áreas rurales y urbanas.</p>
+      </div>
+    </div>
+  </div>
+  
+
+<!-- Nueva Sección: Proyecto -->
+<div class="container-fluid text-center">
+  <h2 class="section-title">Proyecto</h2>
+  <p>Explora los detalles de nuestro proyecto a través de estas herramientas interactivas:</p>
+  <div class="panel-group" id="accordion">
+    <div class="panel panel-default">
+      <div class="panel-heading" onclick="cargarData()">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+            Fuente de datos
+          </a>
+        </h4>
+      </div>
+      <div id="collapse1" class="panel-collapse collapse">
+        <div class="panel-body" id="info">Información pendiente.</div>
+      </div>
+    </div>
+    
+    <div class="panel panel-default">
+      <div class="panel-heading" onclick="calculadora()">
+        <h4 class="panel-title">
+          <a data-toggle="collapse" data-parent="#accordion" href="#collapse3">
+            Calculadora
+          </a>
+        </h4>
+      </div>
+      <div id="collapse3" class="panel-collapse collapse">
+        <div class="panel-body" id="info2">Información pendiente.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="container-fluid text-center">
+  <p>© 2024 HidroEnergy| Soluciones de Energía Renovable</p>
+</footer>
+
+</body>
+</html>
